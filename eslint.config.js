@@ -15,7 +15,7 @@ export default [
   {
     languageOptions: { 
       globals: globals.browser,
-      parseOptions: {
+      parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
       },

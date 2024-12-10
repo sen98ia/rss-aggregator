@@ -25,6 +25,9 @@ export default [
     },
   },
   {
+    ignores: ['dist/'],
+  },
+  {
     rules: {
       'no-underscore-dangle': [
         'error',

@@ -1,18 +1,22 @@
-const renderErrors = (element, errorMessage, state) => {
-  const errorContainer = document.querySelector('.text-danger');
+const renderFeedback = (element, feedbackMessage, state) => {
+  const feedbackElement = document.querySelector('.feedback');
   if (state.form.valid) {
     element.classList.remove('is-invalid');
-    errorContainer.textContent = '';
-    return;
+    // element.value = ''; ругается линтер, значение параметру ф-ии
+    feedbackElement.classList.remove('text-danger');
+    feedbackElement.classList.add('text-success');
+    feedbackElement.textContent = 'RSS успешно загружен';
+  } else {
+    element.classList.add('is-invalid');
+    feedbackElement.classList.add('text-danger');
+    feedbackElement.textContent = feedbackMessage;
   }
-  element.classList.add('is-invalid');
-  errorContainer.textContent = errorMessage;
 };
 
 const render = (element, initialState) => (path, value) => {
   switch (path) {
-    case ('form.error'):
-      renderErrors(element, value, initialState);
+    case ('form.feedback'):
+      renderFeedback(element, value, initialState);
       break;
     default:
       break;

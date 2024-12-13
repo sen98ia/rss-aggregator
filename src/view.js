@@ -12,10 +12,10 @@ const renderFeedback = (element, feedbackMessage, state, i18nextInstance) => {
   }
 };
 
-const render = (element, initialState, i18nextInstance) => (path, value) => {
+const render = (element, state, i18nextInstance) => (path, value) => {
   switch (path) {
     case ('form.feedback'):
-      renderFeedback(element, value, initialState, i18nextInstance);
+      renderFeedback(element, value, state, i18nextInstance);
       break;
     default:
       break;

@@ -4,7 +4,9 @@ export default {
       invalidUrl: 'Ссылка должна быть валидным URL',
       duplicatedUrl: 'RSS уже существует',
       emptyInput: 'Не должно быть пустым',
-      successfulValidation: 'RSS успешно загружен',
+      invalidRSS: 'Ресурс не содержит валидный RSS',
+      networkError: 'Ошибка сети',
+      successfulLoading: 'RSS успешно загружен',
     },
   },
 };

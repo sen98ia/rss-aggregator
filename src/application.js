@@ -2,14 +2,14 @@ import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
 import axios from 'axios';
-// import uniqueId from 'lodash.uniqueid';
+import uniqueId from 'lodash.uniqueid';
 import render from './view.js';
 import resources from './locales/ru.js';
 import parse from './parser.js';
 
 yup.setLocale({
   mixed: {
-    // не могу задать без ф-ии, тогда нет доступа по ключу
+    // не могу задать константой без ф-ии, тогда нет доступа по ключу
     notOneOf: () => ({ key: 'duplicatedUrl' }),
     required: () => ({ key: 'emptyInput' }),
   },
@@ -21,7 +21,7 @@ yup.setLocale({
 const validate = (url, urls) => {
   const schema = yup.string().url().required().notOneOf(urls);
   return schema.validate(url)
-    .then(() => 'successfulValidation')
+    .then(() => null)
     .catch((error) => {
       const errorLocale = error.errors.map((err) => err.key).join('');
       return errorLocale;
@@ -46,12 +46,11 @@ export default () => {
   const initialState = {
     form: {
       valid: true,
-      formStatus: 'filling', // submitted
       feedback: '',
     },
     loadingProcess: {
-      status: '',
-      error: '',
+      status: '', // loading, successfulLoading, failedLoading
+      feedback: '',
     },
     feeds: {
       feedsList: [],
@@ -62,12 +61,10 @@ export default () => {
     },
   };
 
-  // логика приложения, разделить на фии с инициализацией? куда стейт? (C)
+  // логика приложения, разделить на ф-ии с инициализацией? куда стейт? (C)
   const form = document.querySelector('.rss-form');
   const input = document.getElementById('url-input');
-  // const feedsContainer = document.querySelector('.feeds');
-  // const postsContainer = document.querySelector('.posts');
-  // const submitButton = document.querySelector('button[type="submit"]');
+  const submitButton = document.querySelector('button[type="submit"]');
 
   const watchedState = onChange(initialState, render(input, initialState, i18nextInstance));
 
@@ -76,20 +73,48 @@ export default () => {
 
     const formData = new FormData(event.target);
     const inputData = formData.get('url');
-    validate(inputData, watchedState.feeds.feedsList)
+    const addedFeeds = watchedState.feeds.feedsList.map((feed) => feed.url);
+    validate(inputData, addedFeeds)
       .then((feedback) => {
-        if (feedback !== 'successfulValidation') {
+        if (feedback) {
           watchedState.form.valid = false;
+          watchedState.form.feedback = feedback;
         } else {
           watchedState.form.valid = true;
-          watchedState.feeds.feedsList.push(inputData);
-          input.value = ''; // нарушает ли это MVC? как еще можно очистить инпут?
-          const lala = addProxy(inputData);
-          axios.get(lala)
-            .then((response) => console.log(parse(response.data.contents, 'application/xml', parser)))
-            .catch((err) => console.log(err));
+          // отключать кнопку тут или в рендере по статусу?
+          submitButton.disabled = true;
+          watchedState.loadingProcess.status = 'loading';
+          // очищаю предыдущие ошибки
+          watchedState.form.feedback = '';
+          watchedState.loadingProcess.feedback = '';
+
+          const feedURL = addProxy(inputData);
+          axios.get(feedURL)
+            .then((response) => {
+              parse(response.data.contents, 'application/xml', parser);
+            })
+            .then((data) => {
+              input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
+              // хранить р-т парсинга в стейте? или парсить в рендере?
+              // если хранить в стейте, то частями или все?
+              const feed = { id: uniqueId(), url: inputData, doc: data };
+              const post = { id: uniqueId(), feedId: feed.id, doc: data };
+              watchedState.feeds.feedsList.push(feed);
+              watchedState.feeds.postsList.push(post);
+              watchedState.loadingProcess.status = 'successfulLoading';
+              watchedState.loadingProcess.feedback = 'successfulLoading';
+              submitButton.disabled = false;
+            })
+            .catch((error) => {
+              submitButton.disabled = false;
+              watchedState.loadingProcess.status = 'failedLoading';
+              if (error.message === 'invalidRSS') {
+                watchedState.loadingProcess.feedback = error.message;
+              } else {
+                watchedState.loadingProcess.feedback = 'networkError';
+              }
+            });
         }
-        watchedState.form.feedback = feedback;
       });
   });
 };

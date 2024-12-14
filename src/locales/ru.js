@@ -7,6 +7,7 @@ export default {
       invalidRSS: 'Ресурс не содержит валидный RSS',
       networkError: 'Ошибка сети',
       successfulLoading: 'RSS успешно загружен',
+      previewButtonText: 'Просмотр',
     },
   },
 };

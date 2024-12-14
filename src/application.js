@@ -91,7 +91,8 @@ export default () => {
           const feedURL = addProxy(inputData);
           axios.get(feedURL)
             .then((response) => {
-              parse(response.data.contents, 'application/xml', parser);
+              const data = parse(response.data.contents, 'application/xml', parser);
+              return data;
             })
             .then((data) => {
               input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
@@ -99,8 +100,8 @@ export default () => {
               // если хранить в стейте, то частями или все?
               const feed = { id: uniqueId(), url: inputData, doc: data };
               const post = { id: uniqueId(), feedId: feed.id, doc: data };
-              watchedState.feeds.feedsList.push(feed);
-              watchedState.feeds.postsList.push(post);
+              watchedState.feeds.feedsList.unshift(feed);
+              watchedState.feeds.postsList.unshift(post);
               watchedState.loadingProcess.status = 'successfulLoading';
               watchedState.loadingProcess.feedback = 'successfulLoading';
               submitButton.disabled = false;
@@ -112,6 +113,7 @@ export default () => {
                 watchedState.loadingProcess.feedback = error.message;
               } else {
                 watchedState.loadingProcess.feedback = 'networkError';
+                console.log(error);
               }
             });
         }

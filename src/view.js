@@ -24,16 +24,118 @@ const renderLoadingFeedback = (element, feedbackMessage, state, i18nextInstance)
   }
 };
 
+const createCard = (headerText) => {
+  // создаю карточку
+  const card = document.createElement('div');
+  card.classList.add('card', 'border-0');
+  // добавляю контейнер для хедера
+  const headerContainer = document.createElement('div');
+  headerContainer.classList.add('card-body');
+  // добавляю хедер
+  const header = document.createElement('h2');
+  header.textContent = headerText;
+  header.classList.add('card-title', 'h4');
+  // создаю контейнер под айтемы
+  const listContainer = document.createElement('ul');
+  listContainer.classList.add('list-group', 'border-0', 'rounded-0');
+  // добавляю все в карточку
+  headerContainer.append(header);
+  card.append(headerContainer);
+  card.append(listContainer);
+
+  return card;
+};
+
+const crateFeedItem = (titleText, descriptiontext) => {
+  const item = document.createElement('li');
+  item.classList.add('list-group-item', 'border-0', 'border-end-0');
+
+  const title = document.createElement('h3');
+  title.textContent = titleText;
+  title.classList.add('h6', 'm-0');
+
+  const description = document.createElement('p');
+  description.textContent = descriptiontext;
+  description.classList.add('m-0', 'small', 'text-black-50');
+
+  item.append(title);
+  item.append(description);
+
+  return item;
+};
+
+const createPostItem = (id, titleText, link, previewButtonText) => {
+  const item = document.createElement('li');
+  item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+
+  const linkElement = document.createElement('a');
+  linkElement.textContent = titleText;
+  linkElement.classList.add('fw-bold');
+  linkElement.setAttribute('href', link);
+  linkElement.setAttribute('data-id', id);
+  linkElement.setAttribute('target', '_blank');
+  linkElement.setAttribute('rel', 'noopener noreferrer');
+
+  const buttonElement = document.createElement('button');
+  buttonElement.textContent = previewButtonText;
+  buttonElement.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+  buttonElement.setAttribute('data-id', id);
+  buttonElement.setAttribute('data-bs-toggle', 'modal');
+  buttonElement.setAttribute('data-bs-target', '#modal');
+
+  item.append(linkElement);
+  item.append(buttonElement);
+
+  return item;
+};
+
 const renderFeedsList = (state) => {
-  console.log(state.feeds.feedsList);
-  // const feedsContainer = document.querySelector('.feeds');
-  // const { feedsList } = state.feeds;
-  // feedsList.forEach(({ doc }) => {
-  //   const el = document.createElement('div');
-  //   const content = doc.querySelector('title');
-  //   el.append(content);
-  //   feedsContainer.append(el);
-  // });
+  // очищаю контейнер фидов
+  const feedsContainer = document.querySelector('.feeds');
+  feedsContainer.innerHTML = '';
+  // создаю карточку
+  const feedsCard = createCard('Фиды');
+  // создаю айтемы фидов
+  const listContainer = feedsCard.querySelector('.list-group');
+  const { feedsList } = state.feeds;
+  feedsList.forEach(({ doc }) => {
+    const titleElement = doc.querySelector('title');
+    const descriptionElement = doc.querySelector('description');
+
+    const listItem = crateFeedItem(titleElement.textContent, descriptionElement.textContent);
+    listContainer.append(listItem);
+  });
+
+  feedsContainer.append(feedsCard);
+};
+
+const renderPosts = (state, i18nextInstance) => {
+  // очищать полностью или сверять по id?
+  const postsContainer = document.querySelector('.posts');
+  postsContainer.innerHTML = '';
+
+  const postsCard = createCard('Посты');
+
+  const listContainer = postsCard.querySelector('.list-group');
+  const { postsList } = state.feeds;
+  postsList.forEach(({ id, doc }) => {
+    const titles = doc.querySelectorAll('item > title');
+    const links = doc.querySelectorAll('item > link');
+
+    const titlesArr = Array.from(titles);
+    const linksArr = Array.from(links);
+
+    const entriesArr = titlesArr.map((el, i) => [el.textContent, linksArr[i].textContent]);
+    const buttonText = i18nextInstance.t('previewButtonText');
+
+    entriesArr.forEach((item) => {
+      const listItem = createPostItem(id, item[0], item[1], buttonText);
+      console.log(listItem);
+      listContainer.append(listItem);
+    });
+  });
+
+  postsContainer.append(postsCard);
 };
 
 const render = (element, state, i18nextInstance) => (path, value) => {
@@ -46,6 +148,9 @@ const render = (element, state, i18nextInstance) => (path, value) => {
       break;
     case ('feeds.feedsList'):
       renderFeedsList(state);
+      break;
+    case ('feeds.postsList'):
+      renderPosts(state, i18nextInstance);
       break;
     default:
       break;

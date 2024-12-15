@@ -34,6 +34,34 @@ const addProxy = (url) => {
   return `${proxyURL}${url}`;
 };
 
+const getFeedContent = (doc) => {
+  const title = doc.querySelector('title');
+  const description = doc.querySelector('description');
+
+  return { title: title.textContent, description: description.textContent };
+};
+
+const getPostsContent = (doc) => {
+  const titles = doc.querySelectorAll('item > title');
+  const links = doc.querySelectorAll('item > link');
+  const descriptions = doc.querySelectorAll('item > description');
+
+  const titlesArray = Array.from(titles);
+  const linksArray = Array.from(links);
+  const descriptionsArray = Array.from(descriptions);
+
+  const postsContentArray = titlesArray.map((title, i) => {
+    const content = {
+      title: title.textContent,
+      link: linksArray[i].textContent,
+      description: descriptionsArray[i].textContent,
+    };
+    return content;
+  });
+
+  return postsContentArray;
+};
+
 export default () => {
   // инициализация приложения (M)
   const i18nextInstance = i18next.createInstance();
@@ -96,12 +124,16 @@ export default () => {
             })
             .then((data) => {
               input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
-              // хранить р-т парсинга в стейте? или парсить в рендере?
-              // если хранить в стейте, то частями или все?
-              const feed = { id: uniqueId(), url: inputData, doc: data };
-              const post = { id: uniqueId(), feedId: feed.id, doc: data };
+              // нормально ли хранить эти тексты в стейте?
+              const feedContent = getFeedContent(data);
+              const postsContent = getPostsContent(data);
+              const feed = { id: uniqueId(), url: inputData, content: feedContent };
+              const posts = postsContent.map((postContent) => {
+                const post = { id: uniqueId(), feedId: feed.id, content: postContent };
+                return post;
+              });
               watchedState.feeds.feedsList.unshift(feed);
-              watchedState.feeds.postsList.unshift(post);
+              watchedState.feeds.postsList.unshift(...posts);
               watchedState.loadingProcess.status = 'successfulLoading';
               watchedState.loadingProcess.feedback = 'successfulLoading';
               submitButton.disabled = false;
@@ -112,6 +144,7 @@ export default () => {
               if (error.message === 'invalidRSS') {
                 watchedState.loadingProcess.feedback = error.message;
               } else {
+                // ошибки рендера тоже падают сюда, посмотреть
                 watchedState.loadingProcess.feedback = 'networkError';
                 console.log(error);
               }

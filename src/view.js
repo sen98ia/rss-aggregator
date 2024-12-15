@@ -98,11 +98,8 @@ const renderFeedsList = (state) => {
   // создаю айтемы фидов
   const listContainer = feedsCard.querySelector('.list-group');
   const { feedsList } = state.feeds;
-  feedsList.forEach(({ doc }) => {
-    const titleElement = doc.querySelector('title');
-    const descriptionElement = doc.querySelector('description');
-
-    const listItem = crateFeedItem(titleElement.textContent, descriptionElement.textContent);
+  feedsList.forEach(({ content }) => {
+    const listItem = crateFeedItem(content.title, content.description);
     listContainer.append(listItem);
   });
 
@@ -118,21 +115,12 @@ const renderPosts = (state, i18nextInstance) => {
 
   const listContainer = postsCard.querySelector('.list-group');
   const { postsList } = state.feeds;
-  postsList.forEach(({ id, doc }) => {
-    const titles = doc.querySelectorAll('item > title');
-    const links = doc.querySelectorAll('item > link');
-
-    const titlesArr = Array.from(titles);
-    const linksArr = Array.from(links);
-
-    const entriesArr = titlesArr.map((el, i) => [el.textContent, linksArr[i].textContent]);
+  postsList.forEach(({ id, content }) => {
     const buttonText = i18nextInstance.t('previewButtonText');
 
-    entriesArr.forEach((item) => {
-      const listItem = createPostItem(id, item[0], item[1], buttonText);
-      console.log(listItem);
-      listContainer.append(listItem);
-    });
+    const listItem = createPostItem(id, content.title, content.link, buttonText);
+    console.log(listItem);
+    listContainer.append(listItem);
   });
 
   postsContainer.append(postsCard);

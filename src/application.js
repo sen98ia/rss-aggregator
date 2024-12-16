@@ -27,6 +27,7 @@ const validate = (url, urls) => {
       return errorLocale;
     });
 };
+
 const parser = new DOMParser();
 
 const addProxy = (url) => {
@@ -60,6 +61,44 @@ const getPostsContent = (doc) => {
   });
 
   return postsContentArray;
+};
+
+const getNewPosts = (state) => {
+  console.log('функция запустилась');
+  const { feedsList } = state.feeds;
+  const { postsList } = state.feeds;
+
+  const promises = feedsList.map((feed) => {
+    console.log('функция дошла до запросов');
+    const feedURL = addProxy(feed.url);
+    return axios.get(feedURL)
+      .then((response) => {
+        const data = parse(response.data.contents, 'application/xml', parser);
+        return data;
+      })
+      .then((data) => {
+        const postsContent = getPostsContent(data);
+        const addedPostsLinks = postsList.map((post) => post.content.link);
+        const newPostsContent = postsContent.filter(({ link }) => !addedPostsLinks.includes(link));
+
+        if (newPostsContent.length !== 0) {
+          const newPosts = newPostsContent.map((content) => {
+            const newPost = { id: uniqueId(), feedId: feed.id, content };
+            return newPost;
+          });
+
+          state.feeds.postsList.unshift(...newPosts);
+        }
+        return state;
+      });
+  });
+
+  Promise.all(promises).finally(() => {
+    setTimeout(() => {
+      console.log('функция перезапустилась');
+      getNewPosts(state);
+    }, 5000);
+  });
 };
 
 export default () => {
@@ -144,7 +183,7 @@ export default () => {
               if (error.message === 'invalidRSS') {
                 watchedState.loadingProcess.feedback = error.message;
               } else {
-                // ошибки рендера тоже падают сюда, посмотреть
+                // ошибки рендера тоже падают сюда, что делать?
                 watchedState.loadingProcess.feedback = 'networkError';
                 console.log(error);
               }
@@ -152,4 +191,6 @@ export default () => {
         }
       });
   });
+
+  getNewPosts(watchedState);
 };

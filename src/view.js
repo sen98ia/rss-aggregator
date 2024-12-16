@@ -119,7 +119,6 @@ const renderPosts = (state, i18nextInstance) => {
     const buttonText = i18nextInstance.t('previewButtonText');
 
     const listItem = createPostItem(id, content.title, content.link, buttonText);
-    console.log(listItem);
     listContainer.append(listItem);
   });
 

@@ -94,8 +94,6 @@ const getNewPosts = (state) => {
 
         if (newPostsContent.length !== 0) {
           const newPosts = createPosts(feed.id, newPostsContent);
-          console.log(newPosts);
-
           state.feeds.postsList.unshift(...newPosts);
         }
         return state;
@@ -133,10 +131,11 @@ export default () => {
     },
     uiState: {
       readPostsIDs: [],
+      activeModalID: '',
     },
   };
 
-  // логика приложения, разделить на ф-ии с инициализацией? куда стейт? (C)
+  // логика приложения, стоит ли раздялть на функции? (C)
   const form = document.querySelector('.rss-form');
   const input = document.getElementById('url-input');
   const submitButton = document.querySelector('button[type="submit"]');
@@ -167,7 +166,6 @@ export default () => {
           getData(feedURL)
             .then((data) => {
               input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
-              // нормально ли хранить эти тексты в стейте?
               const feedContent = getFeedContent(data);
               const postsContent = getPostsContent(data);
               const feed = { id: uniqueId(), url: inputData, content: feedContent };
@@ -186,7 +184,6 @@ export default () => {
               } else {
                 // ошибки рендера тоже падают сюда, что делать?
                 watchedState.loadingProcess.feedback = 'networkError';
-                console.log(error);
               }
             });
         }

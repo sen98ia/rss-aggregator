@@ -119,6 +119,13 @@ const renderPosts = (state, i18nextInstance) => {
     const buttonText = i18nextInstance.t('previewButtonText');
 
     const listItem = createPostItem(id, content.title, content.link, buttonText);
+    // нарушает MVC, как повесить обработчик в application на еще не созданные посты?
+    listItem.addEventListener('click', () => {
+      const linkElement = listItem.querySelector('a');
+      linkElement.classList.remove('fw-bold');
+      linkElement.classList.add('fw-normal', 'link-secondary');
+      console.log('click');
+    });
     listContainer.append(listItem);
   });
 

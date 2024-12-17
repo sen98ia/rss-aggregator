@@ -129,16 +129,11 @@ export default () => {
       feedsList: [],
       postsList: [],
     },
-    uiState: {
-      readPostsIDs: [],
-      activeModalID: '',
-    },
   };
 
   // логика приложения, стоит ли раздялть на функции? (C)
   const form = document.querySelector('.rss-form');
   const input = document.getElementById('url-input');
-  const submitButton = document.querySelector('button[type="submit"]');
 
   const watchedState = onChange(initialState, render(input, initialState, i18nextInstance));
 
@@ -155,8 +150,6 @@ export default () => {
           watchedState.form.feedback = feedback;
         } else {
           watchedState.form.valid = true;
-          // отключать кнопку тут или в рендере по статусу?
-          submitButton.disabled = true;
           watchedState.loadingProcess.status = 'loading';
           // очищаю предыдущие ошибки
           watchedState.form.feedback = '';
@@ -165,7 +158,6 @@ export default () => {
           const feedURL = addProxy(inputData);
           getData(feedURL)
             .then((data) => {
-              input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
               const feedContent = getFeedContent(data);
               const postsContent = getPostsContent(data);
               const feed = { id: uniqueId(), url: inputData, content: feedContent };
@@ -174,15 +166,13 @@ export default () => {
               watchedState.feeds.postsList.unshift(...posts);
               watchedState.loadingProcess.status = 'successfulLoading';
               watchedState.loadingProcess.feedback = 'successfulLoading';
-              submitButton.disabled = false;
             })
             .catch((error) => {
-              submitButton.disabled = false;
               watchedState.loadingProcess.status = 'failedLoading';
               if (error.message === 'invalidRSS') {
                 watchedState.loadingProcess.feedback = error.message;
               } else {
-                // ошибки рендера тоже падают сюда, что делать?
+                // сюда попадают ошибки рендера
                 watchedState.loadingProcess.feedback = 'networkError';
               }
             });

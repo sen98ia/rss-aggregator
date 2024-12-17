@@ -15,12 +15,30 @@ const renderLoadingFeedback = (element, feedbackMessage, state, i18nextInstance)
   const feedbackElement = document.querySelector('.feedback');
   feedbackElement.textContent = i18nextInstance.t(feedbackMessage);
   element.classList.remove('is-invalid');
-  // element.value = ''; ругается линтер, значение параметру ф-ии
   if (state.loadingProcess.status === 'successfulLoading') {
+    const input = element;
+    input.value = '';
     feedbackElement.classList.remove('text-danger');
     feedbackElement.classList.add('text-success');
   } else if (state.loadingProcess.status === 'failedLoading') {
     feedbackElement.classList.add('text-danger');
+  }
+};
+
+const renderSubmitButton = (value) => {
+  const submitButton = document.querySelector('button[type="submit"]');
+  switch (value) {
+    case ('loading'):
+      submitButton.disabled = true;
+      break;
+    case ('successfulLoading'):
+      submitButton.disabled = false;
+      break;
+    case ('failedLoading'):
+      submitButton.disabled = false;
+      break;
+    default:
+      break;
   }
 };
 
@@ -106,8 +124,18 @@ const renderFeedsList = (state) => {
   feedsContainer.append(feedsCard);
 };
 
+const renderModal = (content) => {
+  const modalTitle = document.querySelector('.modal-title');
+  const modalBody = document.querySelector('.modal-body');
+  const redirectingButton = document.querySelector('.full-article');
+
+  const { title, description, link } = content;
+  modalTitle.textContent = title;
+  modalBody.textContent = description;
+  redirectingButton.setAttribute('href', link);
+};
+
 const renderPosts = (state, i18nextInstance) => {
-  // очищать полностью или сверять по id?
   const postsContainer = document.querySelector('.posts');
   postsContainer.innerHTML = '';
 
@@ -119,13 +147,19 @@ const renderPosts = (state, i18nextInstance) => {
     const buttonText = i18nextInstance.t('previewButtonText');
 
     const listItem = createPostItem(id, content.title, content.link, buttonText);
-    // нарушает MVC, как повесить обработчик в application на еще не созданные посты?
-    listItem.addEventListener('click', () => {
-      const linkElement = listItem.querySelector('a');
-      linkElement.classList.remove('fw-bold');
-      linkElement.classList.add('fw-normal', 'link-secondary');
-      console.log('click');
+
+    listItem.addEventListener('click', (event) => {
+      const previewButton = listItem.querySelector('button');
+      if (event.target !== listItem) {
+        const linkElement = listItem.querySelector('a');
+        linkElement.classList.remove('fw-bold');
+        linkElement.classList.add('fw-normal', 'link-secondary');
+      }
+      if (event.target === previewButton) {
+        renderModal(content);
+      }
     });
+
     listContainer.append(listItem);
   });
 
@@ -139,6 +173,9 @@ const render = (element, state, i18nextInstance) => (path, value) => {
       break;
     case ('loadingProcess.feedback'):
       renderLoadingFeedback(element, value, state, i18nextInstance);
+      break;
+    case ('loadingProcess.status'):
+      renderSubmitButton(value);
       break;
     case ('feeds.feedsList'):
       renderFeedsList(state);

@@ -158,14 +158,14 @@ export default () => {
           const feedURL = addProxy(inputData);
           getData(feedURL)
             .then((data) => {
+              watchedState.loadingProcess.status = 'successfulLoading';
+              watchedState.loadingProcess.feedback = 'successfulLoading';
               const feedContent = getFeedContent(data);
               const postsContent = getPostsContent(data);
               const feed = { id: uniqueId(), url: inputData, content: feedContent };
               const posts = createPosts(feed.id, postsContent);
               watchedState.feeds.feedsList.unshift(feed);
               watchedState.feeds.postsList.unshift(...posts);
-              watchedState.loadingProcess.status = 'successfulLoading';
-              watchedState.loadingProcess.feedback = 'successfulLoading';
             })
             .catch((error) => {
               watchedState.loadingProcess.status = 'failedLoading';

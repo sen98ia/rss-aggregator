@@ -35,6 +35,15 @@ const addProxy = (url) => {
   return `${proxyURL}${url}`;
 };
 
+const getData = (url) => axios.get(url)
+  .then((response) => {
+    const data = parse(response.data.contents, 'application/xml', parser);
+    return data;
+  })
+  .catch((error) => {
+    throw error;
+  });
+
 const getFeedContent = (doc) => {
   const title = doc.querySelector('title');
   const description = doc.querySelector('description');
@@ -63,29 +72,29 @@ const getPostsContent = (doc) => {
   return postsContentArray;
 };
 
+const createPosts = (feedID, postsContent) => {
+  const posts = postsContent.map((content) => {
+    const post = { id: uniqueId(), feedID, content };
+    return post;
+  });
+  return posts;
+};
+
 const getNewPosts = (state) => {
-  console.log('функция запустилась');
   const { feedsList } = state.feeds;
   const { postsList } = state.feeds;
 
   const promises = feedsList.map((feed) => {
-    console.log('функция дошла до запросов');
     const feedURL = addProxy(feed.url);
-    return axios.get(feedURL)
-      .then((response) => {
-        const data = parse(response.data.contents, 'application/xml', parser);
-        return data;
-      })
+    return getData(feedURL)
       .then((data) => {
         const postsContent = getPostsContent(data);
         const addedPostsLinks = postsList.map((post) => post.content.link);
         const newPostsContent = postsContent.filter(({ link }) => !addedPostsLinks.includes(link));
 
         if (newPostsContent.length !== 0) {
-          const newPosts = newPostsContent.map((content) => {
-            const newPost = { id: uniqueId(), feedId: feed.id, content };
-            return newPost;
-          });
+          const newPosts = createPosts(feed.id, newPostsContent);
+          console.log(newPosts);
 
           state.feeds.postsList.unshift(...newPosts);
         }
@@ -95,7 +104,6 @@ const getNewPosts = (state) => {
 
   Promise.all(promises).finally(() => {
     setTimeout(() => {
-      console.log('функция перезапустилась');
       getNewPosts(state);
     }, 5000);
   });
@@ -156,21 +164,14 @@ export default () => {
           watchedState.loadingProcess.feedback = '';
 
           const feedURL = addProxy(inputData);
-          axios.get(feedURL)
-            .then((response) => {
-              const data = parse(response.data.contents, 'application/xml', parser);
-              return data;
-            })
+          getData(feedURL)
             .then((data) => {
               input.value = ''; // нарушает ли это MVC? где еще можно очистить инпут?
               // нормально ли хранить эти тексты в стейте?
               const feedContent = getFeedContent(data);
               const postsContent = getPostsContent(data);
               const feed = { id: uniqueId(), url: inputData, content: feedContent };
-              const posts = postsContent.map((postContent) => {
-                const post = { id: uniqueId(), feedId: feed.id, content: postContent };
-                return post;
-              });
+              const posts = createPosts(feed.id, postsContent);
               watchedState.feeds.feedsList.unshift(feed);
               watchedState.feeds.postsList.unshift(...posts);
               watchedState.loadingProcess.status = 'successfulLoading';

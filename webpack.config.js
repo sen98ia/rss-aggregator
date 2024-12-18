@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 export default {
   mode: process.env.NODE_ENV || 'production',
   entry: './src/index.js',
+  ignoreWarnings: [/./],
   output: {
     path: path.resolve(__dirname, 'dist'),
   },

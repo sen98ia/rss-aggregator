@@ -131,7 +131,7 @@ export default () => {
     },
   };
 
-  // логика приложения, стоит ли раздялть на функции? (C)
+  // логика приложения (C)
   const form = document.querySelector('.rss-form');
   const input = document.getElementById('url-input');
 

@@ -18,6 +18,7 @@ const renderLoadingFeedback = (element, feedbackMessage, state, i18nextInstance)
   if (state.loadingProcess.status === 'successfulLoading') {
     const input = element;
     input.value = '';
+    input.focus();
     feedbackElement.classList.remove('text-danger');
     feedbackElement.classList.add('text-success');
   } else if (state.loadingProcess.status === 'failedLoading') {

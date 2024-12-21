@@ -1,22 +1,31 @@
-const renderFormFeedback = (element, feedbackMessage, state, i18nextInstance) => {
-  const feedbackElement = document.querySelector('.feedback');
+const initialRender = (elements, i18nextInstance) => {
+  const initialElements = Object.entries(elements);
+  initialElements.forEach(([text, target]) => {
+    const element = target;
+    element.textContent = i18nextInstance.t(text);
+  });
+};
+
+const renderFormFeedback = (elements, feedbackMessage, state, i18nextInstance) => {
+  const { feedbackElement } = elements;
+  const { input } = elements;
   feedbackElement.textContent = i18nextInstance.t(feedbackMessage);
   if (state.form.valid) {
-    element.classList.remove('is-invalid');
+    input.classList.remove('is-invalid');
     feedbackElement.classList.remove('text-danger');
     feedbackElement.classList.add('text-success');
   } else {
-    element.classList.add('is-invalid');
+    input.classList.add('is-invalid');
     feedbackElement.classList.add('text-danger');
   }
 };
 
-const renderLoadingFeedback = (element, feedbackMessage, state, i18nextInstance) => {
-  const feedbackElement = document.querySelector('.feedback');
+const renderLoadingFeedback = (elements, feedbackMessage, state, i18nextInstance) => {
+  const { feedbackElement } = elements;
+  const { input } = elements;
   feedbackElement.textContent = i18nextInstance.t(feedbackMessage);
-  element.classList.remove('is-invalid');
+  input.classList.remove('is-invalid');
   if (state.loadingProcess.status === 'successfulLoading') {
-    const input = element;
     input.value = '';
     input.focus();
     feedbackElement.classList.remove('text-danger');
@@ -26,8 +35,8 @@ const renderLoadingFeedback = (element, feedbackMessage, state, i18nextInstance)
   }
 };
 
-const renderSubmitButton = (value) => {
-  const submitButton = document.querySelector('button[type="submit"]');
+const renderSubmitButton = (elements, value) => {
+  const { submitButton } = elements.initialTextElements;
   switch (value) {
     case ('loading'):
       submitButton.disabled = true;
@@ -108,12 +117,13 @@ const createPostItem = (id, titleText, link, previewButtonText) => {
   return item;
 };
 
-const renderFeedsList = (state) => {
+const renderFeedsList = (elements, state, i18nextInstance) => {
   // очищаю контейнер фидов
-  const feedsContainer = document.querySelector('.feeds');
+  const { feedsContainer } = elements;
   feedsContainer.innerHTML = '';
   // создаю карточку
-  const feedsCard = createCard('Фиды');
+  const feedContainerHeader = i18nextInstance.t('feedContainerHeader');
+  const feedsCard = createCard(feedContainerHeader);
   // создаю айтемы фидов
   const listContainer = feedsCard.querySelector('.list-group');
   const { feedsList } = state.feeds;
@@ -125,7 +135,10 @@ const renderFeedsList = (state) => {
   feedsContainer.append(feedsCard);
 };
 
-const renderModal = (content) => {
+const renderModal = (state) => {
+  const { modalID } = state.uiState;
+  const { content } = state.feeds.postsList.find((post) => post.id === modalID);
+
   const modalTitle = document.querySelector('.modal-title');
   const modalBody = document.querySelector('.modal-body');
   const redirectingButton = document.querySelector('.full-article');
@@ -136,57 +149,60 @@ const renderModal = (content) => {
   redirectingButton.setAttribute('href', link);
 };
 
-const renderPosts = (state, i18nextInstance) => {
-  const postsContainer = document.querySelector('.posts');
+const renderSeenPosts = (state) => {
+  const { seenPosts } = state.uiState;
+  seenPosts.forEach((id) => {
+    const post = document.querySelector(`[data-id="${id}"]`);
+    post.classList.remove('fw-bold');
+    post.classList.add('fw-normal', 'link-secondary');
+  });
+};
+
+const renderPosts = (elemets, state, i18nextInstance) => {
+  const { postsContainer } = elemets;
   postsContainer.innerHTML = '';
 
-  const postsCard = createCard('Посты');
+  const postsContainerHeader = i18nextInstance.t('postsContainerHeader');
+  const postsCard = createCard(postsContainerHeader);
 
   const listContainer = postsCard.querySelector('.list-group');
   const { postsList } = state.feeds;
   postsList.forEach(({ id, content }) => {
     const buttonText = i18nextInstance.t('previewButtonText');
-
     const listItem = createPostItem(id, content.title, content.link, buttonText);
-
-    listItem.addEventListener('click', (event) => {
-      const previewButton = listItem.querySelector('button');
-      if (event.target !== listItem) {
-        const linkElement = listItem.querySelector('a');
-        linkElement.classList.remove('fw-bold');
-        linkElement.classList.add('fw-normal', 'link-secondary');
-      }
-      if (event.target === previewButton) {
-        renderModal(content);
-      }
-    });
-
     listContainer.append(listItem);
   });
 
   postsContainer.append(postsCard);
+  renderSeenPosts(state);
 };
 
-const render = (element, state, i18nextInstance) => (path, value) => {
+const render = (elements, state, i18nextInstance) => (path, value) => {
   switch (path) {
     case ('form.feedback'):
-      renderFormFeedback(element, value, state, i18nextInstance);
+      renderFormFeedback(elements, value, state, i18nextInstance);
       break;
     case ('loadingProcess.feedback'):
-      renderLoadingFeedback(element, value, state, i18nextInstance);
+      renderLoadingFeedback(elements, value, state, i18nextInstance);
       break;
     case ('loadingProcess.status'):
-      renderSubmitButton(value);
+      renderSubmitButton(elements, value);
       break;
     case ('feeds.feedsList'):
-      renderFeedsList(state);
+      renderFeedsList(elements, state, i18nextInstance);
       break;
     case ('feeds.postsList'):
-      renderPosts(state, i18nextInstance);
+      renderPosts(elements, state, i18nextInstance);
+      break;
+    case ('uiState.seenPosts'):
+      renderSeenPosts(state);
+      break;
+    case ('uiState.modalID'):
+      renderModal(state);
       break;
     default:
       break;
   }
 };
 
-export default render;
+export { initialRender, render };

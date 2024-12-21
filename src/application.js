@@ -31,8 +31,10 @@ const validate = (url, urls) => {
 const parser = new DOMParser();
 
 const addProxy = (url) => {
-  const proxyURL = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
-  return `${proxyURL}${url}`;
+  const proxyURL = new URL('https://allorigins.hexlet.app/get');
+  proxyURL.searchParams.append('disableCache', true);
+  proxyURL.searchParams.append('url', url);
+  return proxyURL;
 };
 
 const getData = (url) => axios.get(url)

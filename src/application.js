@@ -78,7 +78,8 @@ export default () => {
       const feedURL = addProxy(feed.url);
       return axios.get(feedURL)
         .then((response) => {
-          const postsContent = parse(response.data.contents, 'application/xml', 'postsContent');
+          const parsedData = parse(response.data.contents);
+          const { postsContent } = parsedData;
           const addedPostsLinks = postsList.map((post) => post.content.link);
           const newPostsContent = postsContent
             .filter(({ link }) => !addedPostsLinks.includes(link));
@@ -145,8 +146,9 @@ export default () => {
             .then((response) => {
               watchedState.loadingProcess.status = 'successfulLoading';
               watchedState.loadingProcess.feedback = 'successfulLoading';
-              const feedContent = parse(response.data.contents, 'application/xml', 'feedContent');
-              const postsContent = parse(response.data.contents, 'application/xml', 'postsContent');
+              const parsedData = parse(response.data.contents);
+              const { feedContent } = parsedData;
+              const { postsContent } = parsedData;
               const feed = { id: uniqueId(), url: inputData, content: feedContent };
               const posts = createPosts(feed.id, postsContent);
               watchedState.feeds.feedsList.unshift(feed);
@@ -156,8 +158,7 @@ export default () => {
               watchedState.loadingProcess.status = 'failedLoading';
               if (error.message === 'invalidRSS') {
                 watchedState.loadingProcess.feedback = error.message;
-              } else {
-                // сюда попадают ошибки рендера
+              } else if (error.message === 'Network Error') {
                 watchedState.loadingProcess.feedback = 'networkError';
               }
             });

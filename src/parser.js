@@ -26,19 +26,16 @@ const getPostsContent = (doc) => {
   return postsContentArray;
 };
 
-export default (data, type, contentType, parser = new DOMParser()) => {
-  const parsedData = parser.parseFromString(data, type);
+export default (data) => {
+  const parser = new DOMParser();
+  const parsedData = parser.parseFromString(data, 'application/xml');
   const errorElement = parsedData.querySelector('parsererror');
   if (errorElement) {
     throw new Error('invalidRSS');
   } else {
-    switch (contentType) {
-      case ('feedContent'):
-        return getFeedContent(parsedData);
-      case ('postsContent'):
-        return getPostsContent(parsedData);
-      default:
-        throw new Error('unknown content type');
-    }
+    return {
+      postsContent: getPostsContent(parsedData),
+      feedContent: getFeedContent(parsedData),
+    };
   }
 };
